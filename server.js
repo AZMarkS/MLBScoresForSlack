@@ -276,22 +276,22 @@ self.parseInProgress = function(game){
       {
         if ( home_runs.player.team_code.toLowerCase() == home_code.toLowerCase())
         {
-          home_string += home_runs.player.first+ " "+home_runs.player.last+"("+home_runs.player.hr+") ";
+          home_string += home_runs.player.first+ " "+home_runs.player.last+"("+home_runs.player.std_hr+") ";
         }
         else
         {
-          away_string += home_runs.player.first+ " "+home_runs.player.last+"("+home_runs.player.hr+") ";
+          away_string += home_runs.player.first+ " "+home_runs.player.last+"("+home_runs.player.std_hr+") ";
         }
       } else {
         for (var i = 0; i < home_runs.player.length; i++)
         {
           if ( home_runs.player[i].team_code.toLowerCase() == home_code.toLowerCase())
           {
-            home_string += home_runs.player[i].first+ " "+home_runs.player[i].last+"("+home_runs.player[i].hr+") ";
+            home_string += home_runs.player[i].first+ " "+home_runs.player[i].last+"("+home_runs.player[i].std_hr+") ";
           }
           else
           {
-            away_string += home_runs.player[i].first+ " "+home_runs.player[i].last+"("+home_runs.player[i].hr+") ";
+            away_string += home_runs.player[i].first+ " "+home_runs.player[i].last+"("+home_runs.player[i].std_hr+") ";
           }
         }
       }
