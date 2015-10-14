@@ -78,6 +78,7 @@ self.createRoutes = function() {
     // we support (now) is team.
     res.send("Not a valid command");
   }
+
   var team = command.text;
 
   // Uncomment and fill in if you're interested in limiting
@@ -135,7 +136,7 @@ self.createRoutes = function() {
 }
 
 self.parseGame = function(game, team){
-  if ( team.length > 0)
+  if ( typeof team !== "undefined" &&  team.length > 0)
   {
     if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
     team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
@@ -162,15 +163,17 @@ self.parseGame = function(game, team){
 
 self.parsePreview = function(game) {
   respString = "";
-  respString += "*"+game.away_name_abbrev+"*  ";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += "    *"+game.status.status + "*\n";
   respString += "*Game Starts at "+game.time+" pm Eastern*\n"
   respString += "*Probable Pitchers*:\n"
@@ -182,19 +185,21 @@ self.parsePreview = function(game) {
 }
 
 self.parseInProgress = function(game){
-  respString = "*";
-  respString += game.away_name_abbrev+"*  ";
+  respString = "";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString += game.linescore.r.away+"  "+
   game.linescore.h.away +"  "+
   game.linescore.e.away;
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
-    respString+="  "
+    respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += game.linescore.r.home +"  "+
   game.linescore.h.home +"  "+
   game.linescore.e.home;
@@ -226,16 +231,18 @@ self.parseInProgress = function(game){
 
   self.parseFinal = function(game){
     respString = "";
-    respString += "*"+game.away_name_abbrev+"*  ";
+    respString += "*"+game.away_name_abbrev+"* ";
     if ( game.away_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.away_win+"-"+game.away_loss+")   ";
     respString += game.linescore.r.away;
     respString+= "\n";
-    respString += "*"+game.home_name_abbrev+"*  ";
+    respString += "*"+game.home_name_abbrev+"* ";
     if ( game.home_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.home_win+"-"+game.home_loss+")   ";
     respString += game.linescore.r.home;
     respString += "    *"+game.status.status+"*\n";
     respString += "*W:* "+game.winning_pitcher.first+" "+
