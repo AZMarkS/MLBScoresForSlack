@@ -172,11 +172,17 @@ self.parsePreview = function(game) {
     respString+=" "
   }
   respString += "    *"+game.status.status + "*\n";
-  respString += "*Game Starts at "+game.time+" pm Eastern*\n"
+  respString += "*Game Starts at "+game.first_pitch_et+" pm Eastern*\n"
   respString += "*Probable Pitchers*:\n"
-  respString += game.away_probable_pitcher.first_name + " "+game.away_probable_pitcher.last_name;
+  respString += game.away_probable_pitcher.first_name + " "+game.away_probable_pitcher.last_name+" ("+
+  game.away_probable_pitcher.wins+"-"+
+  game.away_probable_pitcher.losses+" "+
+  game.away_probable_pitcher.era+")";
   respString += " *vs* ";
-  respString += game.home_probable_pitcher.first_name + " "+game.home_probable_pitcher.last_name+"\n";
+  respString += game.home_probable_pitcher.first_name + " "+game.home_probable_pitcher.last_name+" ("+
+  game.home_probable_pitcher.wins+"-"+
+  game.home_probable_pitcher.losses+" "+
+  game.home_probable_pitcher.era+")"+"\n";
   respString += "\n";
   return respString;
 }
@@ -239,14 +245,16 @@ self.parseInProgress = function(game){
     respString += game.linescore.r.home;
     respString += "    *"+game.status.status+"*\n";
     respString += "*W:* "+game.winning_pitcher.first+" "+
-    game.winning_pitcher.last+" ("+
-    game.winning_pitcher.wins+"-"+
-    game.winning_pitcher.losses+") ";
+                  game.winning_pitcher.last+" ("+
+                  game.winning_pitcher.wins+"-"+
+                  game.winning_pitcher.losses+" "+
+                  game.winning_pitcher.era+") ";
 
     respString += "*L:* "+game.losing_pitcher.first+" "+
-    game.losing_pitcher.last+" ("+
-    game.losing_pitcher.wins+"-"+
-    game.losing_pitcher.losses+") ";
+                  game.losing_pitcher.last+" ("+
+                  game.losing_pitcher.wins+"-"+
+                  game.losing_pitcher.losses+" "+
+                  game.losing_pitcher.era+") ";
     if (game.save_pitcher.first.length > 0)
     {
       respString += "*S:* "+game.save_pitcher.first+" "+
