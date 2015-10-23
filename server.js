@@ -114,7 +114,11 @@ self.createRoutes = function() {
       // MLB has a bad habit of having lists of things (HR, games, etc)
       // be an array for multiple objects and an object for a single object
       // So I need to determine which it is to see how to parse
-      if ( typeof js.data.games.game.length === 'undefined')
+      if ( typeof js.data.games.game === 'undefined')
+      {
+        respString = "No Games Today";
+      }
+      else if ( typeof js.data.games.game.length === 'undefined')
       {
         respString += self.parseGame(js.data.games.game,team);
       }
