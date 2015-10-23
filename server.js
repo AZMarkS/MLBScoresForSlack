@@ -5,6 +5,7 @@ var fs      = require('fs');
 var http = require('http');
 var bodyParser = require('body-parser');
 var util = require('util');
+var winEx = require('./data/winex.json');
 /**
 *  Define the sample application.
 */
@@ -72,11 +73,16 @@ self.createRoutes = function() {
     {
     res.send("Error: Request from Invalid Slack Channe.");
   }*/
-  if ( command.command !== "/scores") {
-    console.log("Commands = "+command.command);
-    // THe command.text is the parameter sent along. The only parameter
-    // we support (now) is team.
-    res.send("Not a valid command");
+  switch (command.command) {
+    case "/scores":
+    case "/wexp":
+      break;
+    default:
+      console.log("Commands = "+command.command);
+      // THe command.text is the parameter sent along. The only parameter
+      // we support (now) is team.
+      res.send("Not a valid command");
+      break;
   }
 
   var team = command.text;
@@ -120,12 +126,12 @@ self.createRoutes = function() {
       }
       else if ( typeof js.data.games.game.length === 'undefined')
       {
-        respString += self.parseGame(js.data.games.game,team);
+        respString += self.parseGame(js.data.games.game,team, command.command);
       }
       else {
         for( var game in js.data.games.game)
         {
-          respString += self.parseGame(js.data.games.game[game], team);
+          respString += self.parseGame(js.data.games.game[game], team, command.command);
         }
       }
       if ( respString.length === 0) {
@@ -139,29 +145,34 @@ self.createRoutes = function() {
 });
 }
 
-self.parseGame = function(game, team){
-  if ( typeof team !== "undefined" &&  team.length > 0)
-  {
-    if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
-    team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
-    {
-      return "";
-    }
+self.parseGame = function(game, team, command){
+  if ( command == "/wexp") {
+    return "WinEx for "+game.home_name_abbrev+" is: "+self.getWinEx(game)+"\n";
   }
-  // Before game starts
-  if (game.status.status === "Preview" ||
-  game.status.status === "Pre-Game" ||
-  game.status.status === "Warmup")
-  {
-    return self.parsePreview(game);
-  }
-  // After a game is over
-  else if (game.status.status === "Final"){
-    return self.parseFinal(game);
-  }
-  // everything else
   else {
-    return self.parseInProgress(game);
+    if ( typeof team !== "undefined" &&  team.length > 0)
+    {
+      if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
+      team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
+      {
+        return "";
+      }
+    }
+    // Before game starts
+    if (game.status.status === "Preview" ||
+    game.status.status === "Pre-Game" ||
+    game.status.status === "Warmup")
+    {
+      return self.parsePreview(game);
+    }
+    // After a game is over
+    else if (game.status.status === "Final"){
+      return self.parseFinal(game);
+    }
+    // everything else
+    else {
+      return self.parseInProgress(game);
+    }
   }
 }
 
@@ -284,6 +295,55 @@ self.parseInProgress = function(game){
 
       return respString;
 
+    }
+
+    self.getWinEx = function (game) {
+      var result = "Beats the hell outta me!";
+      var robStatus = 0;
+      if (game.status.status === "Preview" ||
+                game.status.status === "Pre-Game" ||
+                game.status.status === "Warmup") {
+        return "Game Not Started Yet";
+      }
+      if ( typeof game.runners_on_base !== "undefined") {
+        robStatus = game.runners_on_base.status;
+      }
+      var inning = game.status.inning;
+      var outs = game.status.o;
+      var half = 1;
+      if (game.status.inning_state != "Top") {
+        half = 2;
+      }
+
+      if ( outs == 3)
+      {
+        outs = 0;
+        robStatus = 0;
+        if ( game.status.inning_state == "Middle")
+        {
+          half = 2;
+        }
+        else if ( game.status.inning_state == "End")
+        {
+          half = 1;
+          inning = +inning+1;
+        }
+      }
+      var status = ""+inning+half+(+robStatus+1)+outs;
+      var diff = game.linescore.r.home-game.linescore.r.away;
+      //console.log(status);
+      for( var stats in winexJson)
+        {
+          if ( winexJson[stats].InnBaseOut == status) {
+            for (key in winexJson[stats])
+            {
+              if (key == diff) {
+                result = winexJson[stats][key];
+              }
+            }
+          }
+        }
+      return result;
     }
 
     self.getHR = function(home_runs, home_code, home, away)
