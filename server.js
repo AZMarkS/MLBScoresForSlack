@@ -78,6 +78,7 @@ self.createRoutes = function() {
     // we support (now) is team.
     res.send("Not a valid command");
   }
+
   var team = command.text;
 
   // Uncomment and fill in if you're interested in limiting
@@ -113,7 +114,11 @@ self.createRoutes = function() {
       // MLB has a bad habit of having lists of things (HR, games, etc)
       // be an array for multiple objects and an object for a single object
       // So I need to determine which it is to see how to parse
-      if ( typeof js.data.games.game.length === 'undefined')
+      if ( typeof js.data.games.game === 'undefined')
+      {
+        respString = "No Games Today";
+      }
+      else if ( typeof js.data.games.game.length === 'undefined')
       {
         respString += self.parseGame(js.data.games.game,team);
       }
@@ -135,7 +140,7 @@ self.createRoutes = function() {
 }
 
 self.parseGame = function(game, team){
-  if ( team.length > 0)
+  if ( typeof team !== "undefined" &&  team.length > 0)
   {
     if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
     team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
@@ -162,15 +167,17 @@ self.parseGame = function(game, team){
 
 self.parsePreview = function(game) {
   respString = "";
-  respString += "*"+game.away_name_abbrev+"*  ";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += "    *"+game.status.status + "*\n";
   respString += "*Game Starts at "+game.first_pitch_et+" pm Eastern*\n"
   respString += "*Probable Pitchers*:\n"
@@ -188,19 +195,21 @@ self.parsePreview = function(game) {
 }
 
 self.parseInProgress = function(game){
-  respString = "*";
-  respString += game.away_name_abbrev+"*  ";
+  respString = "";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString += game.linescore.r.away+"  "+
   game.linescore.h.away +"  "+
   game.linescore.e.away;
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
-    respString+="  "
+    respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += game.linescore.r.home +"  "+
   game.linescore.h.home +"  "+
   game.linescore.e.home;
@@ -232,16 +241,18 @@ self.parseInProgress = function(game){
 
   self.parseFinal = function(game){
     respString = "";
-    respString += "*"+game.away_name_abbrev+"*  ";
+    respString += "*"+game.away_name_abbrev+"* ";
     if ( game.away_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.away_win+"-"+game.away_loss+")   ";
     respString += game.linescore.r.away;
     respString+= "\n";
-    respString += "*"+game.home_name_abbrev+"*  ";
+    respString += "*"+game.home_name_abbrev+"* ";
     if ( game.home_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.home_win+"-"+game.home_loss+")   ";
     respString += game.linescore.r.home;
     respString += "    *"+game.status.status+"*\n";
     respString += "*W:* "+game.winning_pitcher.first+" "+
