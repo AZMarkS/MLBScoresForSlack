@@ -309,12 +309,18 @@ self.parseInProgress = function(game){
         robStatus = game.runners_on_base.status;
       }
       var inning = game.status.inning;
+      // If we're in extra innings, then just use the
+      // 9th innning stats
+      if ( inning > 9)
+        inning = 9;
       var outs = game.status.o;
       var half = 1;
       if (game.status.inning_state != "Top") {
         half = 2;
       }
-
+      // WinEx doesn't like 3 outs, so we update to the next
+      // half inning. Don't forget to reset the ROBstatus to 0
+      // and correct for Middle vs End of an inning
       if ( outs == 3)
       {
         outs = 0;
@@ -329,12 +335,17 @@ self.parseInProgress = function(game){
           inning = +inning+1;
         }
       }
+      // Put a "" at the beginning to ensure we do a string
+      // concat instead of an add.
       var status = ""+inning+half+(+robStatus+1)+outs;
       var diff = game.linescore.r.home-game.linescore.r.away;
       //console.log(status);
       for( var stats in winexJson)
         {
+          // Match the game status to the index in the
+          // WinEx table
           if ( winexJson[stats].InnBaseOut == status) {
+            // Match on the run differential to get the WinEx
             for (key in winexJson[stats])
             {
               if (key == diff) {
@@ -351,7 +362,13 @@ self.parseInProgress = function(game){
       var hr_string = "";
       var home_string = "";
       var away_string = "";
-      if (typeof home_runs.player.length === "undefined")
+      // If there are no HR, then don't do anything.
+      if ( typeof home_runs === "undefined" ) {
+        return "";
+      }
+      // for a Single HR in the game, it's an object.
+      // Otherwise it's an array of objects
+      else if (typeof home_runs.player.length === "undefined")
       {
         if ( home_runs.player.team_code.toLowerCase() == home_code.toLowerCase())
         {
