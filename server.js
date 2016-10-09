@@ -5,6 +5,7 @@ var fs      = require('fs');
 var http = require('http');
 var bodyParser = require('body-parser');
 var util = require('util');
+var winEx = require('./data/winex.json');
 /**
 *  Define the sample application.
 */
@@ -72,12 +73,18 @@ self.createRoutes = function() {
     {
     res.send("Error: Request from Invalid Slack Channe.");
   }*/
-  if ( command.command !== "/scores") {
-    console.log("Commands = "+command.command);
-    // THe command.text is the parameter sent along. The only parameter
-    // we support (now) is team.
-    res.send("Not a valid command");
+  switch (command.command) {
+    case "/scores":
+    case "/wexp":
+      break;
+    default:
+      console.log("Commands = "+command.command);
+      // THe command.text is the parameter sent along. The only parameter
+      // we support (now) is team.
+      res.send("Not a valid command");
+      break;
   }
+
   var team = command.text;
 
   // Uncomment and fill in if you're interested in limiting
@@ -113,14 +120,18 @@ self.createRoutes = function() {
       // MLB has a bad habit of having lists of things (HR, games, etc)
       // be an array for multiple objects and an object for a single object
       // So I need to determine which it is to see how to parse
-      if ( typeof js.data.games.game.length === 'undefined')
+      if ( typeof js.data.games.game === 'undefined')
       {
-        respString += self.parseGame(js.data.games.game,team);
+        respString = "No Games Today";
+      }
+      else if ( typeof js.data.games.game.length === 'undefined')
+      {
+        respString += self.parseGame(js.data.games.game,team, command.command);
       }
       else {
         for( var game in js.data.games.game)
         {
-          respString += self.parseGame(js.data.games.game[game], team);
+          respString += self.parseGame(js.data.games.game[game], team, command.command);
         }
       }
       if ( respString.length === 0) {
@@ -134,44 +145,50 @@ self.createRoutes = function() {
 });
 }
 
-self.parseGame = function(game, team){
-  if ( team.length > 0)
-  {
-    if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
-    team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
+self.parseGame = function(game, team, command){
+  if ( command == "/wexp") {
+    return "WinEx for "+game.home_name_abbrev+" is: "+self.getWinEx(game)+"\n";
+  } else {
+    if ( typeof team !== "undefined" &&  team.length > 0)
     {
-      return "";
+      if (team.toLowerCase() !== game.home_name_abbrev.toLowerCase() &&
+      team.toLowerCase() !== game.away_name_abbrev.toLowerCase())
+      {
+        return "";
+      }
     }
-  }
-  // Before game starts
-  if (game.status.status === "Preview" ||
-  game.status.status === "Pre-Game" ||
-  game.status.status === "Postponed" ||
-  game.status.status === "Warmup")
-  {
-    return self.parsePreview(game);
-  }
-  // After a game is over
-  else if (game.status.status === "Final"){
-    return self.parseFinal(game);
-  }
-  // everything else
-  else {
-    return self.parseInProgress(game);
+    // Before game starts
+    if (game.status.status === "Preview" ||
+    game.status.status === "Pre-Game" ||
+    game.status.status === "Postponed" ||
+    game.status.status === "Warmup")
+    {
+      return self.parsePreview(game);
+    }
+    // After a game is over
+    else if (game.status.status === "Final"){
+      return self.parseFinal(game);
+    }
+    // everything else
+    else {
+      return self.parseInProgress(game);
+    }
   }
 }
 
 self.parsePreview = function(game) {
   respString = "";
-  respString += "*"+game.away_name_abbrev+"*  ";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += "    *"+game.status.status + "*\n";
   respString += "*Game Starts at "+game.first_pitch_et+" pm Eastern*\n"
   respString += "*Probable Pitchers*:\n"
@@ -189,19 +206,21 @@ self.parsePreview = function(game) {
 }
 
 self.parseInProgress = function(game){
-  respString = "*";
-  respString += game.away_name_abbrev+"*  ";
+  respString = "";
+  respString += "*"+game.away_name_abbrev+"* ";
   if ( game.away_name_abbrev.length == 2) {
     respString+=" "
   }
+  respString+= "("+game.away_win+"-"+game.away_loss+")   ";
   respString += game.linescore.r.away+"  "+
   game.linescore.h.away +"  "+
   game.linescore.e.away;
   respString+= "\n";
-  respString += "*"+game.home_name_abbrev+"*  ";
+  respString += "*"+game.home_name_abbrev+"* ";
   if ( game.home_name_abbrev.length == 2) {
-    respString+="  "
+    respString+=" "
   }
+  respString+= "("+game.home_win+"-"+game.home_loss+")   ";
   respString += game.linescore.r.home +"  "+
   game.linescore.h.home +"  "+
   game.linescore.e.home;
@@ -233,16 +252,18 @@ self.parseInProgress = function(game){
 
   self.parseFinal = function(game){
     respString = "";
-    respString += "*"+game.away_name_abbrev+"*  ";
+    respString += "*"+game.away_name_abbrev+"* ";
     if ( game.away_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.away_win+"-"+game.away_loss+")   ";
     respString += game.linescore.r.away;
     respString+= "\n";
-    respString += "*"+game.home_name_abbrev+"*  ";
+    respString += "*"+game.home_name_abbrev+"* ";
     if ( game.home_name_abbrev.length == 2) {
       respString+=" "
     }
+    respString+= "("+game.home_win+"-"+game.home_loss+")   ";
     respString += game.linescore.r.home;
     respString += "    *"+game.status.status+"*\n";
     respString += "*W:* "+game.winning_pitcher.first+" "+
@@ -276,12 +297,78 @@ self.parseInProgress = function(game){
 
     }
 
+    self.getWinEx = function (game) {
+      var result = "Beats the hell outta me!";
+      var robStatus = 0;
+      if (game.status.status === "Preview" ||
+                game.status.status === "Pre-Game" ||
+                game.status.status === "Warmup") {
+        return "Game Not Started Yet";
+      }
+      if ( typeof game.runners_on_base !== "undefined") {
+        robStatus = game.runners_on_base.status;
+      }
+      var inning = game.status.inning;
+      // If we're in extra innings, then just use the
+      // 9th innning stats
+      if ( inning > 9)
+        inning = 9;
+      var outs = game.status.o;
+      var half = 1;
+      if (game.status.inning_state != "Top") {
+        half = 2;
+      }
+      // WinEx doesn't like 3 outs, so we update to the next
+      // half inning. Don't forget to reset the ROBstatus to 0
+      // and correct for Middle vs End of an inning
+      if ( outs == 3)
+      {
+        outs = 0;
+        robStatus = 0;
+        if ( game.status.inning_state == "Middle")
+        {
+          half = 2;
+        }
+        else if ( game.status.inning_state == "End")
+        {
+          half = 1;
+          inning = +inning+1;
+        }
+      }
+      // Put a "" at the beginning to ensure we do a string
+      // concat instead of an add.
+      var status = ""+inning+half+(+robStatus+1)+outs;
+      var diff = game.linescore.r.home-game.linescore.r.away;
+      //console.log(status);
+      for( var stats in winexJson)
+        {
+          // Match the game status to the index in the
+          // WinEx table
+          if ( winexJson[stats].InnBaseOut == status) {
+            // Match on the run differential to get the WinEx
+            for (key in winexJson[stats])
+            {
+              if (key == diff) {
+                result = winexJson[stats][key];
+              }
+            }
+          }
+        }
+      return result;
+    }
+
     self.getHR = function(home_runs, home_code, home, away)
     {
       var hr_string = "";
       var home_string = "";
       var away_string = "";
-      if (typeof home_runs.player.length === "undefined")
+      // If there are no HR, then don't do anything.
+      if ( typeof home_runs === "undefined" ) {
+        return "";
+      }
+      // for a Single HR in the game, it's an object.
+      // Otherwise it's an array of objects
+      else if (typeof home_runs.player.length === "undefined")
       {
         if ( home_runs.player.team_code.toLowerCase() == home_code.toLowerCase())
         {
