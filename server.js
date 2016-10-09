@@ -146,6 +146,7 @@ self.parseGame = function(game, team){
   // Before game starts
   if (game.status.status === "Preview" ||
   game.status.status === "Pre-Game" ||
+  game.status.status === "Postponed" ||
   game.status.status === "Warmup")
   {
     return self.parsePreview(game);
