@@ -158,20 +158,18 @@ self.parseGame = function(game, team, command){
       }
     }
     // Before game starts
-    if (game.status.status === "Preview" ||
-    game.status.status === "Pre-Game" ||
-    game.status.status === "Postponed" ||
-    game.status.status === "Warmup")
-    {
-      return self.parsePreview(game);
-    }
-    // After a game is over
-    else if (game.status.status === "Final"){
-      return self.parseFinal(game);
-    }
-    // everything else
-    else {
-      return self.parseInProgress(game);
+    switch (game.status.status){
+      "Final":
+        return self.parseFinal(game)
+        break;
+      "Pre-Game":
+      "Preview":
+      "Postponed":
+      "Warmup":
+        return self.parsePreview(game)
+        break
+      default:
+        self.parseInProgress(game)
     }
   }
 }
